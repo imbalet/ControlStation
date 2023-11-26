@@ -199,8 +199,8 @@ const char index_html[] PROGMEM = R"====(
                 let ind = i == firstGamepad ? 0 : 1;
                 data += ind + "a";
                 for (var j = 0; j < controller.axes.length; j++) {
-                    data += String(Math.trunc(controller.axes[j] * 255)).padStart(3, '0')
-                    //data += ind + "a" + Math.trunc(controller.axes[j] * 255);
+                    data += String(Math.trunc(controller.axes[j] * 255) + 255).padStart(3, '0')
+                    //data += ind + "a" + (Math.trunc(controller.axes[j] * 255) + 255);
                     //document.getElementById(i + "ax" + j).value = controller.axes[j];
                 }
                 data += "/";
@@ -213,8 +213,9 @@ const char index_html[] PROGMEM = R"====(
                 }
                 data += "/";
             }
-            document.getElementById("test").innerHTML = data.slice(0, data.length - 1);
-            return data.slice(0, data.length - 1);
+            document.getElementById("test").innerHTML = data;
+            
+            return data;
     
         }
     
@@ -262,7 +263,7 @@ const char index_html[] PROGMEM = R"====(
     
         setInterval(function () {
             send();
-        }, 70);
+        }, 170);
     
         setInterval(function () {
             scan();
