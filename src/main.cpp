@@ -1,16 +1,14 @@
 #include <ESP8266WiFi.h>
-#include <ESPAsyncTCP.h>
-#include <ESPAsyncWebServer.h>
+#include <ESP8266WebServer.h>
+#include <WebSocketsServer.h>
+#include <Hash.h>
 #include "html.h"
 
 const char* ssid = "вифи 412/1";
 const char* password = "FE4121FE";
 
-bool ledState = 0;
-const int ledPin = 2;
-
-AsyncWebServer server(80);
-AsyncWebSocket ws("/ws");
+ESP8266WebServer server(80);
+WebSocketsServer webSocket = WebSocketsServer(81);
 
 struct gamepad{
   int axes [4];
@@ -22,35 +20,45 @@ gamepad pad0, pad1;
 
 gamepad pads [2] = {pad0, pad1};
 
-void notifyClients() {
-  ws.textAll("OK");
+String msg;
+String prevMsg;
+
+
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+
+switch(type) {
+  case WStype_DISCONNECTED:
+    //Serial.printf("[%u] Disconnected!\n", num);
+    Serial.println("Disconnected");
+    break;
+  case WStype_CONNECTED:
+  {
+    IPAddress ip = webSocket.remoteIP(num);
+    //Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+    // send message to client
+    webSocket.sendTXT(num, "Connected");
+  }
+    break;
+  case WStype_TEXT:
+    msg = ((char*) payload);
+    //Serial.printf("[%u] get Text: %s\n", num, payload);
+    // send message to client
+    // webSocket.sendTXT(num, "message here");
+    // send data to all connected clients
+    // webSocket.broadcastTXT("message here");
+    break;
+  case WStype_BIN:
+    Serial.println("Binary");
+    //Serial.printf("[%u] get binary length: %u\n", num, length);
+    //hexdump(payload, length);
+    // send message to client
+    // webSocket.sendBIN(num, payload, length);
+    break;
 }
 
-// void convertData(char* data){ //        0a001001001001/0b0000000000000000000/a001001001001/0b000000000000000000/
-//   //gamepad* structPtr;
-//   bool now; //1 - axes, 0 - buttons
-//   uint8_t pad;
-//   for (int i; data[i] != '\0'; i++){
-//     if(data[i] == 'a' || data[i] == 'b'){
-//       now = data[i] == 'a' ? 1 : 0;
-//       pad = data[i-1] - 48;
-//       now = 1;
-//       continue;
-//     }
-//     for (int j = 0; data[i] != '/';){
-//       if(now){
-//         pads[pad].axes[j] = (data[i] - 48) * 100 + (data[i+1] - 48) * 10 + (data[i+2] - 48); 
-//         j++;
-//         i += 3;
-//       }
-//       else{
-//         pads[pad].buttons[j] = data[i] - 48;
-//         j++;
-//         i++;
-//       }
-//     }
-//   }
-// }
+}
+
+
 
 void convertData(char* data){ //        0a001001001001/0b0000000000000000000/a001001001001/0b000000000000000000/
   Serial.print(data[1]);
@@ -96,51 +104,15 @@ void printintarr(int* arr, int len){
 }
 
 
-void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
-  AwsFrameInfo *info = (AwsFrameInfo*)arg;
-  if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-    data[len] = 0;
-    Serial.print("                              ");
-    Serial.print('\r');
-    convertData((char*)data);
-    //printintarr(pads[0].axes,4);
-    // Serial.print((char*)data);
-    Serial.print("   ");
-    Serial.print(pads[0].axes[0]);
-        Serial.print("   ");
-    Serial.print(pads[1].axes[0]);
-    Serial.print("   ");
-    Serial.print(ESP.getFreeHeap());
-    
-    //notifyClients();
-  }
+void handleRoot(){
+  server.send(200, "text/html", index_html);
 }
 
-void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,
-             void *arg, uint8_t *data, size_t len) {
-    switch (type) {
-      case WS_EVT_CONNECT:
-        Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
-        break;
-      case WS_EVT_DISCONNECT:
-        Serial.printf("WebSocket client #%u disconnected\n", client->id());
-        break;
-      case WS_EVT_DATA:
-        handleWebSocketMessage(arg, data, len);
-        break;
-      case WS_EVT_PONG:
-      case WS_EVT_ERROR:
-        break;
-  }
-}
-
-void initWebSocket() {
-  ws.onEvent(onEvent);
-  server.addHandler(&ws);
-}
 
 
 void setup(){
+  webSocket.begin();
+  webSocket.onEvent(webSocketEvent);
   Serial.begin(115200);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -150,15 +122,29 @@ void setup(){
 
   Serial.println(WiFi.localIP());
 
-  initWebSocket();
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/html", index_html);
-  });
-
+  server.on("/", handleRoot);
   server.begin();
 }
 
+long timer;
+
 void loop() {
-  ws.cleanupClients();
+  server.handleClient();
+  webSocket.loop();
+  
   yield();
+
+  if (millis() - timer >= 100){
+    prevMsg = msg;
+    Serial.print("                              ");
+    Serial.print('\r');
+    convertData((char*)prevMsg.c_str());
+    Serial.print("   ");
+    Serial.print(pads[0].axes[0]);
+        Serial.print("   ");
+    Serial.print(pads[1].axes[0]);
+    Serial.print("   ");
+    Serial.print(ESP.getFreeHeap());
+    timer = millis();
+  }
 }

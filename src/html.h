@@ -91,7 +91,7 @@ const char index_html[] PROGMEM = R"====(
         let controllers = {};
         let firstGamepad = -1;
     
-        var gateway = `ws://${window.location.hostname}/ws`;
+        var gateway = `ws://${window.location.hostname}:81/`;
         var websocket;
         window.addEventListener('load', onLoad);
     
