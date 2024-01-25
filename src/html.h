@@ -253,6 +253,7 @@ const char index_html[] PROGMEM = R"====(
         }
         console.log(params)
         feedback()
+        setTimeout(send, params.sendInterval)
     }
 
     function showConfig() {
@@ -291,8 +292,19 @@ const char index_html[] PROGMEM = R"====(
     }
 
     /*Data*/
+    function hash(data){
+        let checkSum = 0;
+        for (char of data){
+            checkSum += char.charCodeAt(0)
+            if(checkSum > 255) checkSum -= 256;
+        }
+        return String(checkSum).padStart(3,'0');
+        
+    }
+
     function data() {
         let data = "";
+        let len = 0;
 
         for (i in controllers) {
             var controller = controllers[i];
@@ -312,11 +324,18 @@ const char index_html[] PROGMEM = R"====(
         if (Object.keys(controllers).length == 1) {
             data += "1a255255255255/1b000000000000000000/"
         }
-        document.getElementById("test").innerHTML = `${Number(params.feedback)}%${data.length}/` + data;
+        
+        
 
-        return `${Number(params.feedback)}%${data.length}/` + data;
+        len = 6 + data.length
+        len += String(len).length
+        len = String(len).padStart(3, '0');
+        data = `%${len}/` + data;
+        
+        document.getElementById("test").innerHTML = String(Number(params.feedback)) + data + hash(data);
+        return String(Number(params.feedback)) + data + hash(data);
 
-    }
+    }   //%080/0a245268249247/0b000000000000000000/1a255255255255/1b000000000000000000/151
 
     /*WebSocket*/
     let wsConn = 0;
@@ -363,6 +382,8 @@ const char index_html[] PROGMEM = R"====(
         document.getElementById("ip").value = gateway;
         showConfig();
         initWebSocket();
+        console.log(data(0))
+        //1%75/0a243268253253/0b000000000000000000/1a255255255255/1b000000000000000000/161
     }
 
     /*Other*/
