@@ -25,6 +25,29 @@ const char index_html[] PROGMEM = R"====(
         display: flex;
     }
 
+    #autoButton{
+        margin: 20px;
+        width: auto;
+        background-color: #823939;
+        color: aliceblue;
+        padding: 1%;
+        border: none;
+        border-radius: 10px;
+        transition: all 0.3s;
+        min-height: 40px;
+        min-width: 100px;
+    }
+
+    #autoButton:hover {
+        background: #ffffff;
+        color: black;
+    }
+
+    #autoButton:active {
+        background-color: #823939;
+        color: white;
+    }
+
     .gamepad {
         background-color: #1a1a1a;
         border: aliceblue;
@@ -85,6 +108,16 @@ const char index_html[] PROGMEM = R"====(
 <body>
     <p id="press">PRESS ANY BUTTON</p>
     <div id="gamepads"></div>
+    <div id="auto">
+        <center>
+            <button id = "autoButton", onclick="auto()">
+                START
+            </button>
+            <br>
+            <span id = "autotimer"></span>
+        </center>
+
+    </div>
     <div id="test"></div>
     <div id="config"></div>
     <div id="ipDiv">
@@ -98,9 +131,9 @@ const char index_html[] PROGMEM = R"====(
         </label>
     </div>
     <div id="debug">
-        <span id="send"></span>
-        <span id="scan"></span>
-        <span id="feedbackData"></span>
+        <span id="send"></span> <br>
+        <span id="scan"></span> <br>
+        <span id="feedbackData"></span> <br>
     </div>
 </body>
 
@@ -121,6 +154,49 @@ const char index_html[] PROGMEM = R"====(
 
     let prevScanTime;
 
+    /*Auto*/
+    let timer;
+    let autoTimer;
+    let autoMode = false;
+    function auto(){
+        if(typeof autoTimer != 'undefined')
+            clearTimeout(autoTimer)
+            
+        autoTimer = setTimeout(disableAuto, 30000);
+        timer = Date.now();
+        autoMode = true;
+    }
+
+    function disableAuto(){
+        autoMode = false;
+        clearTimeout(autoTimer)
+        timer = 0;
+    }
+
+    function updateData(){
+        if(timer){
+            document.getElementById("autotimer").innerHTML = ((timer + 30000) - Date.now())/1000;
+        }
+        else{
+            document.getElementById("autotimer").innerHTML = "";
+        }
+
+
+        document.getElementById("send").innerHTML = "send" + String(prevSendTime) + "//" + String(Date.now() - prevSendTime)
+        document.getElementById("scan").innerHTML = "scan" + String(prevScanTime) + "//" + String(Date.now() - prevScanTime)
+
+
+        let text = document.getElementById("feedbackData")
+        if (params.feedback) {
+            text.innerHTML = "feedback" + String(messTime) + "//" + String(Date.now() - messTime)
+        }
+        else {
+            text.innerHTML = "feedback is off"
+        }
+        
+    }
+    setInterval(updateData, 80);
+
     /*Gamepad connection*/
     function remove(index) {
         let axes = document.getElementById("axes" + index);
@@ -136,12 +212,12 @@ const char index_html[] PROGMEM = R"====(
 
     function add(gamepad) {
         document.getElementById("gamepads").innerHTML += `
-            <div class="gamepad" id="gamepad${gamepad.index}">
-                ${gamepad.index}
-                <div class="axes" id="axes${gamepad.index}"></div>
-                <div class="buttons" id="buttons${gamepad.index}"></div>
-            </div>
-            `
+                <div class="gamepad" id="gamepad${gamepad.index}">
+                    ${gamepad.index}
+                    <div class="axes" id="axes${gamepad.index}"></div>
+                    <div class="buttons" id="buttons${gamepad.index}"></div>
+                </div>
+                `
         let axes = document.getElementById("axes" + gamepad.index);
         let buttons = document.getElementById("buttons" + gamepad.index);
 
@@ -156,19 +232,19 @@ const char index_html[] PROGMEM = R"====(
 
         for (i = 0; i < gamepad.axes.length; i++) {
             axes.innerHTML += `
-                            <label>
-                                ${i} axis
-                                <meter id="${gamepad.index}ax${i}" min="-1" max="1" value="0"></meter>
-                            <label>
-                            <br>
-                        `
+                                <label>
+                                    ${i} axis
+                                    <meter id="${gamepad.index}ax${i}" min="-1" max="1" value="0"></meter>
+                                <label>
+                                <br>
+                            `
         }
         for (i = 0; i < gamepad.buttons.length; i++) {
             buttons.innerHTML += `
-                    <div class = "button" id = "${gamepad.index}bt${i}">
-                        ${i}
-                    </div>
-                    `
+                        <div class = "button" id = "${gamepad.index}bt${i}">
+                            ${i}
+                        </div>
+                        `
         }
     }
 
@@ -187,7 +263,7 @@ const char index_html[] PROGMEM = R"====(
         }
         update();
 
-        document.getElementById("scan").innerHTML = "scan" + String(prevScanTime) + "//" + String(Date.now() - prevScanTime)
+        
         prevScanTime = Date.now()
         setTimeout(scan, params.scanInterval)
     }
@@ -210,16 +286,6 @@ const char index_html[] PROGMEM = R"====(
     }
 
     /*Config functions*/
-    function feedback() {
-        let text = document.getElementById("feedbackData")
-        if (params.feedback) {
-            text.innerHTML = "feedback" + String(messTime) + "//" + String(Date.now() - messTime)
-        }
-        else {
-            text.innerHTML = "feedback is off"
-        }
-    }
-
     function changeIP() {
         console.log("changed")
         console.log("disconnect")
@@ -265,21 +331,21 @@ const char index_html[] PROGMEM = R"====(
                 case ("number"):
                     el.innerHTML +=
                         `
-                                <label id= "${i}"  >${i}
-                                    <br>
-                                    <input type="text" name = ${i} value = "${params[i]}">
-                                    <hr>
-                                </label>
-                            `
+                                    <label id= "${i}"  >${i}
+                                        <br>
+                                        <input type="text" name = ${i} value = "${params[i]}">
+                                        <hr>
+                                    </label>
+                                `
                     break;
                 case ("boolean"):
                     el.innerHTML +=
                         `
-                                <label id= "${i}">${i}
-                                    <input type="checkbox" value = "${Number(params[i])}" name = ${i} checked = "${Number(params[i])}">
-                                    <hr>
-                                </label>
-                            `
+                                    <label id= "${i}">${i}
+                                        <input type="checkbox" value = "${Number(params[i])}" name = ${i} checked = "${Number(params[i])}">
+                                        <hr>
+                                    </label>
+                                `
                     break;
                 case ("string"):
                     break;
@@ -292,19 +358,23 @@ const char index_html[] PROGMEM = R"====(
     }
 
     /*Data*/
-    function hash(data){
+    function hash(data) {
         let checkSum = 0;
-        for (char of data){
+        for (char of data) {
             checkSum += char.charCodeAt(0)
-            if(checkSum > 255) checkSum -= 256;
+            if (checkSum > 255) checkSum -= 256;
         }
-        return String(checkSum).padStart(3,'0');
-        
+        return String(checkSum).padStart(3, '0');
+
     }
 
     function data() {
         let data = "";
         let len = 0;
+
+        if(autoMode){
+            return  "1%080/0a255255255255/0b000000001100000000/1a255255255255/1b000000001100000000/148"
+        }
 
         for (i in controllers) {
             var controller = controllers[i];
@@ -324,15 +394,14 @@ const char index_html[] PROGMEM = R"====(
         if (Object.keys(controllers).length == 1) {
             data += "1a255255255255/1b000000000000000000/"
         }
-        
-        
+
+
 
         len = 6 + data.length
         len += String(len).length
         len = String(len).padStart(3, '0');
         data = `%${len}/` + data;
-        
-        document.getElementById("test").innerHTML = String(Number(params.feedback)) + data + hash(data);
+
         return String(Number(params.feedback)) + data + hash(data);
 
     }   //%080/0a245268249247/0b000000000000000000/1a255255255255/1b000000000000000000/151
@@ -342,10 +411,12 @@ const char index_html[] PROGMEM = R"====(
     let prevSendTime;
 
     function send() {
+        let dataSend = data();
         if (wsConn) {
-            websocket.send(data());
+            websocket.send(dataSend);
         }
-        document.getElementById("send").innerHTML = "send" + String(prevSendTime) + "//" + String(Date.now() - prevSendTime)
+        document.getElementById("test").innerHTML = dataSend;
+        
         prevSendTime = Date.now()
         setTimeout(send, params.sendInterval)
     }
@@ -375,7 +446,6 @@ const char index_html[] PROGMEM = R"====(
     }
     let messTime;
     function onMessage(event) {
-        feedback()
         messTime = Date.now();
     }
     function onLoad(event) {
