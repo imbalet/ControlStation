@@ -61,7 +61,7 @@ static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN 0 */
 #include <stdbool.h>
 #include <string.h>
-#define DEF_PAD_DATA "0a255255255255/0b0000000000000000000/a255255255255/0b000000000000000000/"
+#define DEF_PAD_DATA "0a255255255255/0b0000000000000000000/a255255255255/0b000000000000000000/\r"
 #define UART_TIMEOUT 300
 
 typedef struct gamepad {
@@ -84,7 +84,7 @@ uint8_t check_sum;
 uint32_t timer = 0;
 
 //-1 to 1
-double mov_axes[4];
+float mov_axes[4];
 
 void convertData(char *data) { //0a001001001001/0b0000000000000000000/a001001001001/0b000000000000000000/
 	bool now; // 1 - axes, 0 - buttons
@@ -148,7 +148,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 		size_data = (temp_data[1] - 48) * 100 + (temp_data[2] - 48) * 10 + (temp_data[3] - 48);
 		uint8_t check_sum_data = (temp_data[size_data - 3] - 48) * 100 + (temp_data[size_data - 2] - 48) * 10 + (temp_data[size_data - 1] - 48);
 		write_data = 0;
-		if (check_sum == check_sum_data) {
+		if (check_sum == check_sum_data && ind_data == size_data + 1) {
 			timer = HAL_GetTick();
 			memcpy(data, &temp_data[5], size_data - 10);
 			data[size_data - 8] = '\r';
@@ -158,7 +158,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 void convert_chushpan(void) {
 	if (HAL_GetTick() - timer >= UART_TIMEOUT) {
-		memcpy(data, DEF_PAD_DATA, 72);
+		memcpy(data, DEF_PAD_DATA, 74);
 	}
 
 	HAL_UART_Receive_DMA(&huart1, rx_data, 1);
