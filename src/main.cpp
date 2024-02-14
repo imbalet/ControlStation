@@ -14,14 +14,14 @@
 
 #define STA 1 // 1 for STA, 0 - AP
 
-const char *sta_ssid = "Emil_pidor";
-const char *sta_password = "12345678";
+const char *ap_ssid = "ap_wif";
+const char *ap_password = "ap_pass";
 
 #define SCREEN_ADDRESS 0x3C
 Adafruit_SSD1306 display(128, 64, &Wire, -1);
 
-const char *ssid = "pen is";
-const char *password = "12345678";
+const char *ssid = "wifi";
+const char *password = "pass";
 
 #define DEF_PAD_DATA "%080/0a256255255255/0b000000000000000000/1a255255255255/1b000000000000000000/097/"
 #define UART_TIMEOUT 500
@@ -80,7 +80,7 @@ void setup()
 
   #else
   
-  WiFi.softAP(sta_ssid, sta_password);
+  WiFi.softAP(ap_ssid, ap_password);
   
   #endif
 
