@@ -71,6 +71,9 @@ typedef struct gamepad {
 
 gamepad pads[2];
 
+//autonom flag
+bool autonom_flag = false;
+
 //RX
 uint8_t rx_data[1];
 uint8_t temp_data[100];
@@ -127,11 +130,18 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	}
 
 	if (write_data) {
-		if (ind_data <= 76) {
+
+
+		temp_data[ind_data] = rx_data[0];
+
+		if (ind_data == 3){
+			size_data = (temp_data[1] - 48) * 100 + (temp_data[2] - 48) * 10 + (temp_data[3] - 48);
+		}
+		if (ind_data <= size_data - 4 || ind_data <= 3) {
 			check_sum += rx_data[0];
 		}
 
-		temp_data[ind_data] = rx_data[0];
+
 		ind_data++;
 	}
 	if (ind_data >= 99) {
@@ -145,7 +155,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	}
 	if (rx_data[0] == '\r') {
 
-		size_data = (temp_data[1] - 48) * 100 + (temp_data[2] - 48) * 10 + (temp_data[3] - 48);
+		//size_data = (temp_data[1] - 48) * 100 + (temp_data[2] - 48) * 10 + (temp_data[3] - 48);
 		uint8_t check_sum_data = (temp_data[size_data - 3] - 48) * 100 + (temp_data[size_data - 2] - 48) * 10 + (temp_data[size_data - 1] - 48);
 		write_data = 0;
 		if (check_sum == check_sum_data && ind_data == size_data + 1) {
@@ -166,8 +176,18 @@ void convert_chushpan(void) {
 	convertData((char*) data);
 
 	for (int i = 0; i < 4; i++) {
-		mov_axes[i] = i % 2 == 0 ? (double)((pads[0].axes[i]) - 256.0f) / 256.0f : (double)((pads[0].axes[i]) - 256.0f) / -256.0f;
-		if (mov_axes[i] >= -0.1 && mov_axes[i] <= 0.1) mov_axes[i] = 0.0f;
+		move_axes[i] = i % 2 == 0 ? (double)((pads[0].axes[i]) - 256.0f) / 256.0f : (double)((pads[0].axes[i]) - 256.0f) / -256.0f;
+		if (move_axes[i] >= -0.1 && move_axes[i] <= 0.1) move_axes[i] = 0.0f;
+	}
+
+	if (pads[0].buttons[8] && pads[0].buttons[9] &&
+		pads[1].buttons[8] && pads[1].buttons[9])
+	{
+		autonom_flag = true;
+	}
+	else
+	{
+		autonom_flag = false;
 	}
 }
 

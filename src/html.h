@@ -20,6 +20,14 @@ const char index_html[] PROGMEM = R"====(
 
     }
 
+    kbd {
+        border: 2px solid #ffffff;
+        border-radius: 30%;
+        padding: 2px;
+        margin: 5px;
+
+    }
+
     #gamepads {
         height: 100%;
         display: flex;
@@ -30,7 +38,7 @@ const char index_html[] PROGMEM = R"====(
         width: auto;
         background-color: #823939;
         color: aliceblue;
-        padding: 1%;
+        padding: 7px;
         border: none;
         border-radius: 10px;
         transition: all 0.3s;
@@ -62,7 +70,6 @@ const char index_html[] PROGMEM = R"====(
     }
 
     .axes {
-        /* width: 100%; */
         height: 10%;
         display: flex;
         align-items: flex-start;
@@ -112,6 +119,15 @@ const char index_html[] PROGMEM = R"====(
         <center>
             <button id = "autoButton", onclick="auto()">
                 START
+                <br>
+                <br>
+                <kbd>F</kbd>
+            </button>
+            <button id = "autoButton", onclick="disableAuto()">
+                STOP
+                <br>
+                <br>
+                <kbd>Ctrl</kbd> + <kbd>Z</kbd>
             </button>
             <br>
             <span id = "autotimer"></span>
@@ -159,12 +175,17 @@ const char index_html[] PROGMEM = R"====(
     let autoTimer;
     let autoMode = false;
     function auto(){
+
         if(typeof autoTimer != 'undefined')
             clearTimeout(autoTimer)
             
         autoTimer = setTimeout(disableAuto, 30000);
         timer = Date.now();
         autoMode = true;
+    }
+    function stopAuto(){
+        if(typeof autoTimer != 'undefined')
+            clearTimeout(autoTimer)
     }
 
     function disableAuto(){
@@ -460,6 +481,16 @@ const char index_html[] PROGMEM = R"====(
     window.addEventListener('load', onLoad);
     //window.addEventListener("gamepadconnected", connecthandler);
     window.addEventListener("gamepaddisconnected", disconnecthandler);
+
+    window.addEventListener('keydown', function (event) {
+        if (event.code == 'KeyF'){
+            auto();
+        }
+        if (event.code == 'KeyZ' && (event.ctrlKey || event.metaKey)) {
+            disableAuto();
+          }
+        
+      })
 
     setTimeout(send, params.sendInterval)
     setTimeout(scan, params.scanInterval)

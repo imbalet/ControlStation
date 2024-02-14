@@ -6,14 +6,24 @@
 #include <WiFi.h>
 #endif
 
-#include <ESP8266WebServer.h>
-#include <WebSocketsServer.h>
+#include "ESP8266WebServer.h"
+#include "Adafruit_GFX.h"
+#include "Adafruit_SSD1306.h"
+#include "WebSocketsServer.h"
 #include "html.h"
+
+#define STA 1 // 1 for STA, 0 - AP
+
+const char *sta_ssid = "Emil_pidor";
+const char *sta_password = "12345678";
+
+#define SCREEN_ADDRESS 0x3C
+Adafruit_SSD1306 display(128, 64, &Wire, -1);
 
 const char *ssid = "pen is";
 const char *password = "12345678";
 
-#define DEF_PAD_DATA "%80/0a255255255255/0b000000000000000000/1a255255255255/1b000000000000000000/096/"
+#define DEF_PAD_DATA "%080/0a256255255255/0b000000000000000000/1a255255255255/1b000000000000000000/097/"
 #define UART_TIMEOUT 500
 
 ESP8266WebServer server(80);
@@ -60,11 +70,19 @@ void handleRoot()
 
 void setup()
 {
-  WiFi.begin(ssid, password);
+  #if STA
+
+    WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(1000);
   }
+
+  #else
+  
+  WiFi.softAP(sta_ssid, sta_password);
+  
+  #endif
 
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
@@ -74,6 +92,18 @@ void setup()
 
   server.on("/", handleRoot);
   server.begin();
+
+  display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
+
+  display.clearDisplay();
+
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0,0);
+  display.println(String(WiFi.localIP()));
+  display.println((WiFi.softAPIP()));
+  display.display();
+
 }
 
 uint32_t send_timer = 0;
