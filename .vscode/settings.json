@@ -58,5 +58,9 @@
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "files.associations": {
     "*.txt": "c"
-  }
+  },
+  "vsintellicode.python.completionsEnabled": true,
+  "python.analysis.inlayHints.functionReturnTypes": true,
+  "python.analysis.inlayHints.pytestParameters": false,
+  "cmake.sourceDirectory": "C:/Users/imbalet/Desktop/ControlStation/.pio/libdeps/upesy_wroom/Adafruit BusIO"
 }

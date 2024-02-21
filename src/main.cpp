@@ -12,16 +12,16 @@
 #include "WebSocketsServer.h"
 #include "html.h"
 
-#define STA 1 // 1 for STA, 0 - AP
+#define STA 0 // 1 for STA, 0 - AP
 
-const char *ap_ssid = "ap_wif";
-const char *ap_password = "ap_pass";
+const char *ap_ssid = "ROBOT";
+const char *ap_password = "12345678";
 
 #define SCREEN_ADDRESS 0x3C
 Adafruit_SSD1306 display(128, 64, &Wire, -1);
 
-const char *ssid = "wifi";
-const char *password = "pass";
+const char *ssid = "wintest";
+const char *password = "12345678";
 
 #define DEF_PAD_DATA "%080/0a256255255255/0b000000000000000000/1a255255255255/1b000000000000000000/097/"
 #define UART_TIMEOUT 500
@@ -70,12 +70,34 @@ void handleRoot()
 
 void setup()
 {
+
+
+  display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
+
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0,0);
+  display.println("No connection((");
+  display.display();
+
   #if STA
 
-    WiFi.begin(ssid, password);
+  WiFi.begin(ssid, password);
+
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0,0);
+  display.println("Connecting.......");
+  display.display();
+
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(1000);
+    display.setCursor(0,1);
+    display.print(millis())
+    display.display();
   }
 
   #else
@@ -100,7 +122,7 @@ void setup()
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0,0);
-  display.println(String(WiFi.localIP()));
+  display.println(WiFi.localIP());
   display.println((WiFi.softAPIP()));
   display.display();
 

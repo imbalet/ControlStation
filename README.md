@@ -184,7 +184,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 		write_data = 0;
 		if (check_sum == check_sum_data && ind_data == size_data + 1) {
 			timer = HAL_GetTick();
-			memcpy(data, &temp_data[5], size_data - 10);
+			memcpy(data, &temp_data[5], size_data);
 			data[size_data - 8] = '\r';
 		}
 	}
