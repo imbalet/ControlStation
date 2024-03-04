@@ -12,7 +12,7 @@
 #include "WebSocketsServer.h"
 #include "html.h"
 
-#define STA 0 // 1 for STA, 0 - AP
+#define STA 1 // 1 for STA, 0 - AP
 
 const char *ap_ssid = "ROBOT";
 const char *ap_password = "12345678";
@@ -67,11 +67,12 @@ void handleRoot()
 {
   server.send(200, "text/html", index_html);
 }
-
+uint32_t mosfet_timer = 0;
 void setup()
 {
-
-
+  pinMode(2, OUTPUT);
+  digitalWrite(2, 0);
+  
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
 
   display.clearDisplay();
@@ -96,7 +97,7 @@ void setup()
   {
     delay(1000);
     display.setCursor(0,1);
-    display.print(millis())
+    display.print(millis());
     display.display();
   }
 
@@ -125,6 +126,7 @@ void setup()
   display.println(WiFi.localIP());
   display.println((WiFi.softAPIP()));
   display.display();
+  mosfet_timer = millis();
 
 }
 
@@ -132,6 +134,9 @@ uint32_t send_timer = 0;
 
 void loop()
 {
+  if (millis() - mosfet_timer >= 5000){
+    digitalWrite(2, 1);
+  }
   server.handleClient();
   webSocket.loop();
 

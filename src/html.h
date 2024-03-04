@@ -405,7 +405,7 @@ const char index_html[] PROGMEM = R"====(
         }
 
         if (params.keyboardControl) {
-            data = `%080/0a${String(keys.a ? 0 : keys.d ? 510 : 255).padStart(3, '0')}` +
+            data = `%080/0a${String(s.a ? 0 : keys.d ? 510 : 255).padStart(3, '0')}` +
             `${String(keys.w ? 0 : keys.s ? 510 : 255).padStart(3, '0')}` +
             `${String(keys.larr ? 0 : keys.rarr ? 510 : 255).padStart(3, '0')}` +
             `${String(keys.larr ? 0 : keys.rarr ? 510 : 255).padStart(3, '0')}` +
@@ -528,7 +528,7 @@ const char index_html[] PROGMEM = R"====(
 
         if (event.type == "keydown") {
 
-            if (event.code == 'KeyF') {
+            if (event.code == 'Space') {
                 auto();
             }
             if (event.code == 'KeyZ' && (event.ctrlKey || event.metaKey)) {
