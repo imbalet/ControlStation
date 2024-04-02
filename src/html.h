@@ -56,6 +56,10 @@ const char index_html[] PROGMEM = R"====(
         color: white;
     }
 
+    .autoButtonPressed{
+        background-color: #458239 !important;
+    }
+
     .gamepad {
         background-color: #1a1a1a;
         border: aliceblue;
@@ -121,7 +125,7 @@ const char index_html[] PROGMEM = R"====(
                 START
                 <br>
                 <br>
-                <kbd>F</kbd>
+                <kbd>Space</kbd>
             </button>
             <button id="autoButton" , onclick="disableAuto()">
                 STOP
@@ -159,7 +163,7 @@ const char index_html[] PROGMEM = R"====(
     let controllers = {};
 
     let params = {
-        sendInterval: 150,
+        sendInterval: 50,
         scanInterval: 10,
         feedback: true,
         movementPad: 0,
@@ -177,23 +181,26 @@ const char index_html[] PROGMEM = R"====(
     let autoTimer;
     let autoMode = false;
     function auto() {
-
+        autoMode = true;
+        document.getElementById("autoButton").classList.add("autoButtonPressed")
+/*
         if (typeof autoTimer != 'undefined')
             clearTimeout(autoTimer)
 
         autoTimer = setTimeout(disableAuto, 30000);
         timer = Date.now();
-        autoMode = true;
+*/
     }
-    function stopAuto() {
+    /*function stopAuto() {
         if (typeof autoTimer != 'undefined')
             clearTimeout(autoTimer)
-    }
+    } */
 
     function disableAuto() {
         autoMode = false;
-        clearTimeout(autoTimer)
-        timer = 0;
+        document.getElementById("autoButton").classList.remove("autoButtonPressed")
+        /*clearTimeout(autoTimer)
+        timer = 0;*/
     }
 
     function updateData() {
@@ -586,4 +593,5 @@ const char index_html[] PROGMEM = R"====(
 </script>
 
 </html>
+
 )====";

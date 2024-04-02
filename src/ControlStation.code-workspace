@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"name": "wifi_relay",
+			"path": "../../../../Документы/PlatformIO/Projects/wifi_relay"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.txt": "c"
+		},
+		"vsintellicode.python.completionsEnabled": true
+	}
+}
