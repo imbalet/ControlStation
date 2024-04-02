@@ -1,3 +1,6 @@
+#ifndef HTML
+#define HTML
+
 #include <Arduino.h>
 const char index_html[] PROGMEM = R"====(
 <!DOCTYPE html>
@@ -25,7 +28,13 @@ const char index_html[] PROGMEM = R"====(
         border-radius: 30%;
         padding: 2px;
         margin: 5px;
+    }
 
+    .hidden{
+        max-height: 0 !important;
+    }
+    .hidden_hint{
+        display: none;
     }
 
     #gamepads {
@@ -54,6 +63,23 @@ const char index_html[] PROGMEM = R"====(
     #autoButton:active {
         background-color: #823939;
         color: white;
+    }
+
+    #config{
+        overflow: hidden;
+        transition: 0.4s ease max-height;
+        max-height: 1000px;
+    }
+
+    #coords{
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-evenly;
+    }
+
+    #coords input{
+        width: 100px;
     }
 
     .autoButtonPressed{
@@ -106,8 +132,7 @@ const char index_html[] PROGMEM = R"====(
     }
 
     label {
-        display: block;
-        width: 30%;
+justify-content: space-evenly;
     }
 
     input {
@@ -140,7 +165,46 @@ const char index_html[] PROGMEM = R"====(
     </div>
     <div id="test"></div>
     <div id="keys"></div>
-    <div id="config"></div>
+
+    <button onclick="displayConfig()">
+        Конфиг
+    </button>
+
+    <div id="config" class="hidden"></div>
+
+    <form id="coords">
+        <label>
+            X
+            <br>
+            <input type="number" name="X" step="0.00000001">
+        </label>
+        <label>
+            Y
+            <br>
+            <input type="number" name="Y" step="0.00000001">
+        </label>
+        <label>
+            fi
+            <br>
+            <input type="number" name="fi" step="0.00000001">
+        </label>
+
+        <label>
+            XYspeed
+            <br>
+            <input type="number" name="XYspeed" step="0.00000001">
+        </label>
+        <label>
+            FIspeed
+            <br>
+            <input type="number" name="FIspeed" step="0.00000001">
+        </label>
+        
+        <input type="submit">
+
+    </form>
+
+
     <div id="ipDiv">
         <label>IP
             <br>
@@ -151,6 +215,7 @@ const char index_html[] PROGMEM = R"====(
             <hr>
         </label>
     </div>
+
     <div id="debug">
         <span id="send"></span> <br>
         <span id="scan"></span> <br>
@@ -180,21 +245,13 @@ const char index_html[] PROGMEM = R"====(
     let timer;
     let autoTimer;
     let autoMode = false;
+    let sent_coord_flag = false;
     function auto() {
         autoMode = true;
+        sent_coord_flag = false;
         document.getElementById("autoButton").classList.add("autoButtonPressed")
-/*
-        if (typeof autoTimer != 'undefined')
-            clearTimeout(autoTimer)
-
-        autoTimer = setTimeout(disableAuto, 30000);
-        timer = Date.now();
-*/
+        
     }
-    /*function stopAuto() {
-        if (typeof autoTimer != 'undefined')
-            clearTimeout(autoTimer)
-    } */
 
     function disableAuto() {
         autoMode = false;
@@ -228,6 +285,17 @@ const char index_html[] PROGMEM = R"====(
     setInterval(updateData, 80);
 
     /*Gamepad connection*/
+
+    function show_hint(){
+        if (Object.keys(controllers).length > 0){
+            document.getElementById("press").classList.add("hidden_hint")
+        }
+        else{
+            document.getElementById("press").classList.remove("hidden_hint")
+        }
+    }
+
+
     function remove(index) {
         let axes = document.getElementById("axes" + index);
         let buttons = document.getElementById("buttons" + index);
@@ -238,6 +306,7 @@ const char index_html[] PROGMEM = R"====(
     function disconnecthandler(e) {
         remove(e.gamepad.index);
         delete controllers[e.gamepad.index];
+        show_hint();
     }
 
     function add(gamepad) {
@@ -276,6 +345,7 @@ const char index_html[] PROGMEM = R"====(
                             </div>
                             `
         }
+        show_hint()
     }
 
     function scan() {
@@ -316,6 +386,14 @@ const char index_html[] PROGMEM = R"====(
     }
 
     /*Config functions*/
+
+    function displayConfig(){
+        if (document.getElementById("config").classList.contains("hidden")) 
+        document.getElementById("config").classList.remove("hidden")
+        else
+            document.getElementById("config").classList.add("hidden")
+    }
+
     function changeIP() {
         console.log("changed")
         console.log("disconnect")
@@ -355,7 +433,6 @@ const char index_html[] PROGMEM = R"====(
     function showConfig() {
         document.getElementById("config").innerHTML = ""
         let el = document.createElement("form");
-        //el.id = "form";
         for (i in params) {
             switch (typeof (params[i])) {
                 case ("number"):
@@ -388,6 +465,26 @@ const char index_html[] PROGMEM = R"====(
     }
 
     /*Data*/
+    coords = {
+        X: 0,
+        Y: 0,
+        Fi: 0,
+        XYspeed: 0,
+        FIspeed: 0,
+    }
+
+    function save_coords(e){
+        e.preventDefault();
+        let form = document.getElementById("coords");
+        console.log(form);
+        let data = serializeForm(form);
+        for (i of data){
+            coords[i["name"]] = Number(i.value)
+        }
+    }
+
+
+
     function hash(data) {
         let checkSum = 0;
         for (char of data) {
@@ -408,10 +505,22 @@ const char index_html[] PROGMEM = R"====(
         let len = 0;
 
         if (autoMode) {
-            return "1%080/0a255255255255/0b000000001100000000/1a255255255255/1b000000001100000000/148"
+            if (sent_coord_flag){
+                return "1%080/0a255255255255/0b000000001100000000/1a255255255255/1b000000001100000000/148"
+            }
+            else{
+                data = `$${coords["X"]}/${coords["Y"]}/${coords["Fi"]}/${coords["XYspeed"]}/${coords["FIspeed"]}/`
+                
+                len = 6 + data.length
+                len += String(len).length
+                len = String(len).padStart(3, '0');
+                data = `%${len}/` + data;
+                //console.log(String(Number(params.feedback)) + data + hash(data))
+                return String(Number(params.feedback)) + data + hash(data);
+            }
         }
 
-        if (params.keyboardControl) {
+        else if (params.keyboardControl) {
             data = `%080/0a${String(s.a ? 0 : keys.d ? 510 : 255).padStart(3, '0')}` +
             `${String(keys.w ? 0 : keys.s ? 510 : 255).padStart(3, '0')}` +
             `${String(keys.larr ? 0 : keys.rarr ? 510 : 255).padStart(3, '0')}` +
@@ -495,6 +604,10 @@ const char index_html[] PROGMEM = R"====(
     }
     let messTime;
     function onMessage(event) {
+        if(event.data == "cord"){
+            sent_coord_flag = true;
+            console.log("OK");
+        }
         messTime = Date.now();
     }
     function onLoad(event) {
@@ -509,6 +622,8 @@ const char index_html[] PROGMEM = R"====(
     window.addEventListener('load', onLoad);
     //window.addEventListener("gamepadconnected", connecthandler);
     window.addEventListener("gamepaddisconnected", disconnecthandler);
+
+    document.addEventListener('submit', save_coords);
 
     let keys = {
         w: 0,
@@ -595,3 +710,6 @@ const char index_html[] PROGMEM = R"====(
 </html>
 
 )====";
+
+
+#endif
